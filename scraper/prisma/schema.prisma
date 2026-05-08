@@ -1,0 +1,105 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Company {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String
+  brand       String?
+  website     String?
+  country     String
+  linkedin    String?
+  social      Json?
+  emails      String[]
+  contactUrl  String?   @map("contact_url")
+  status      String    @default("new")
+  priority    Boolean   @default(false)
+  notes       String?
+  scrapedAt   DateTime? @map("scraped_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  products    Product[]
+  activityLog ActivityLog[]
+  outreach    Outreach[]
+
+  @@unique([name, country])
+  @@map("companies")
+}
+
+model Product {
+  id          String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId   String         @map("company_id") @db.Uuid
+  name        String
+  marketplace String
+  sourceUrl   String?        @unique @map("source_url")
+  category    String?
+  country     String?
+  diskPath    String?        @map("disk_path")
+  scrapedAt   DateTime?      @map("scraped_at")
+  createdAt   DateTime       @default(now()) @map("created_at")
+  company     Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  images      ProductImage[]
+  findings    ComplianceFinding[]
+
+  @@map("products")
+}
+
+model ProductImage {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  productId String   @map("product_id") @db.Uuid
+  filename  String
+  diskPath  String   @map("disk_path")
+  labelType String?  @map("label_type")
+  sha256    String?
+  width     Int?
+  height    Int?
+  createdAt DateTime @default(now()) @map("created_at")
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("product_images")
+}
+
+model ComplianceFinding {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  productId String   @map("product_id") @db.Uuid
+  engine    String?
+  severity  String?
+  finding   String
+  detail    Json?
+  createdAt DateTime @default(now()) @map("created_at")
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("compliance_findings")
+}
+
+model ActivityLog {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId String   @map("company_id") @db.Uuid
+  eventType String   @map("event_type")
+  payload   Json?
+  createdAt DateTime @default(now()) @map("created_at")
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@map("activity_log")
+}
+
+model Outreach {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId String    @map("company_id") @db.Uuid
+  channel   String?
+  recipient String?
+  subject   String?
+  body      String?
+  status    String    @default("sent")
+  sentAt    DateTime? @map("sent_at")
+  repliedAt DateTime? @map("replied_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  company   Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@map("outreach")
+}
