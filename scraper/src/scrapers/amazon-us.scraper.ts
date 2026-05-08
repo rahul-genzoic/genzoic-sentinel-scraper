@@ -1,0 +1,76 @@
+import type { Page } from 'playwright'
+import { BaseScraper, type RawProduct, type RawCompany } from './base.scraper.js'
+import { SCRAPER_CONFIGS } from '../config/scrapers.config.js'
+import { filterBusinessEmails, extractEmailsFromHtml } from '../lib/email-extractor.js'
+
+const SEL = SCRAPER_CONFIGS['amazon-us'].selectors
+
+export class AmazonUsScraper extends BaseScraper {
+  readonly name       = 'amazon-us'
+  readonly marketplace = 'Amazon US'
+  readonly country    = 'US' as const
+
+  async *discoverListings(
+    page: Page,
+    category: string,
+    options: { limit?: number }
+  ): AsyncGenerator<string> {
+    const query = encodeURIComponent(category)
+    let url = SEL.searchUrl.replace('{query}', query)
+    let count = 0
+    const limit = options.limit ?? 50
+
+    while (url && count < limit) {
+      await page.goto(url, { waitUntil: 'domcontentloaded' })
+      await page.waitForSelector(SEL.productCard, { timeout: 10_000 }).catch(() => null)
+      await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
+      await page.waitForTimeout(1500)
+
+      const links: string[] = await page.locator(`${SEL.productCard} ${SEL.productLink}`)
+        .evaluateAll((els) => els.map((a) => (a as HTMLAnchorElement).href))
+
+      for (const link of links) {
+        if (count >= limit) return
+        yield link
+        count++
+      }
+
+      const nextHref = await page.locator(SEL.nextPage).getAttribute('href').catch(() => null)
+      url = nextHref ? `https://www.amazon.com${nextHref}` : ''
+    }
+  }
+
+  async scrapeProduct(page: Page, url: string): Promise<RawProduct> {
+    await page.goto(url, { waitUntil: 'domcontentloaded' })
+    await page.waitForSelector(SEL.productTitle, { timeout: 15_000 })
+
+    const name = await page.locator(SEL.productTitle).textContent().then(t => t?.trim() ?? '').catch(() => '')
+
+    const imageUrls: string[] = await page.locator(SEL.imageCarousel)
+      .evaluateAll((imgs) =>
+        [...new Set(
+          (imgs as HTMLImageElement[])
+            .map((img) => img.src || img.getAttribute('data-old-hires') || '')
+            .filter((src) => src.startsWith('http') && !src.includes('sprite'))
+            .map((src) => src.replace(/\._[A-Z0-9_]+_\./, '.'))
+        )]
+      )
+
+    return {
+      name,
+      sourceUrl:   url,
+      marketplace: this.marketplace,
+      country:     this.country,
+      category:    '',
+      imageUrls:   imageUrls.slice(0, 8),
+      rawHtml:     await page.content(),
+    }
+  }
+
+  async extractCompany(page: Page, product: RawProduct): Promise<RawCompany> {
+    const brandText = await page.locator(SEL.brandLink).textContent().catch(() => '')
+    const brand = (brandText ?? '').replace(/^(Visit the|Brand:|by)\s+/i, '').trim()
+    const emails = filterBusinessEmails(extractEmailsFromHtml(product.rawHtml ?? ''))
+    return { name: brand || 'Unknown', brand: brand || 'Unknown', emails, country: this.country }
+  }
+}
