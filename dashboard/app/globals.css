@@ -1,26 +1,57 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    color-scheme: dark;
+  }
+
+  * {
+    border-color: #222222;
+  }
+
+  body {
+    background-color: #0a0a0a;
+    color: #f0f0f0;
+    font-family: Inter, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #141414;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #333;
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #444;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer components {
+  .sentinel-table {
+    @apply w-full text-sm;
+  }
+
+  .sentinel-table th {
+    @apply text-left text-text-secondary font-medium text-xs uppercase tracking-wider
+           py-3 px-4 border-b border-border;
+  }
+
+  .sentinel-table td {
+    @apply py-3 px-4 border-b border-border-subtle text-text-primary;
+  }
+
+  .sentinel-table tr:hover td {
+    @apply bg-bg-hover;
+  }
 }
