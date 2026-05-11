@@ -19,11 +19,12 @@ export interface OrchestratorOptions {
   scraper: BaseScraper
   category: string
   limit?: number
+  headed?: boolean
   proxy?: { server: string; username?: string; password?: string }
 }
 
 export async function runScraper(options: OrchestratorOptions): Promise<RunSummary> {
-  const { scraper, category, limit, proxy } = options
+  const { scraper, category, limit, headed, proxy } = options
   const config = SCRAPER_CONFIGS[scraper.name]
   const rateLimiter = new RateLimiter({ defaultDelayMs: config?.delayMs ?? 2000 })
 
@@ -39,7 +40,7 @@ export async function runScraper(options: OrchestratorOptions): Promise<RunSumma
   }
 
   const startTime = Date.now()
-  const browser = await launchBrowser()
+  const browser = await launchBrowser(headed)
   const ctx = await createContext(browser, proxy)
 
   let shutdownRequested = false

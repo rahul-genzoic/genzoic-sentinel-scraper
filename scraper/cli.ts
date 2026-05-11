@@ -19,14 +19,16 @@ program
   .requiredOption('--source <source>', `Scraper name or "all". Options: ${listScraperNames().join(', ')}`)
   .option('--category <category>', 'Product category to search (omit to run all default categories for the source)')
   .option('--limit <number>', 'Max products to scrape per category', '50')
+  .option('--headed', 'Run browser in headed (visible) mode for debugging')
   .action(async (opts) => {
     const limit = parseInt(opts.limit, 10)
+    const headed: boolean = !!opts.headed
     const scrapers = opts.source === 'all' ? getAllScrapers() : [getScraper(opts.source)]
     for (const scraper of scrapers) {
       const config = SCRAPER_CONFIGS[scraper.name]
       const categories: string[] = opts.category ? [opts.category] : (config?.categories ?? ['supplements'])
       for (const category of categories) {
-        const summary = await runScraper({ scraper, category, limit })
+        const summary = await runScraper({ scraper, category, limit, headed })
         console.log(`\n✓ ${scraper.name}/${category}: ${summary.scraped} scraped, ${summary.failed} failed (${summary.durationMs}ms)\n`)
       }
     }

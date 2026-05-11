@@ -6,10 +6,15 @@ export interface ProxyConfig {
   password?: string
 }
 
-export async function launchBrowser(): Promise<Browser> {
+export async function launchBrowser(headed = false): Promise<Browser> {
   return chromium.launch({
-    headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+    headless: !headed,
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-blink-features=AutomationControlled',
+    ],
   })
 }
 
@@ -17,7 +22,7 @@ export async function createContext(
   browser: Browser,
   proxy?: ProxyConfig
 ): Promise<BrowserContext> {
-  return browser.newContext({
+  const ctx = await browser.newContext({
     proxy,
     userAgent:
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
@@ -25,6 +30,11 @@ export async function createContext(
     locale: 'en-US',
     extraHTTPHeaders: { 'Accept-Language': 'en-US,en;q=0.9' },
   })
+  // Hide navigator.webdriver from page scripts
+  await ctx.addInitScript(() => {
+    Object.defineProperty(navigator, 'webdriver', { get: () => undefined })
+  })
+  return ctx
 }
 
 export async function newPage(context: BrowserContext): Promise<Page> {
