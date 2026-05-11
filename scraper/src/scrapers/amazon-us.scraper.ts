@@ -45,7 +45,10 @@ export class AmazonUsScraper extends BaseScraper {
 
   async scrapeProduct(page: Page, url: string): Promise<RawProduct> {
     await page.goto(url, { waitUntil: 'domcontentloaded' })
-    await page.waitForSelector(SEL.productTitle, { timeout: 15_000 })
+    await page.waitForFunction(
+      () => (document.querySelector('#productTitle') as HTMLElement)?.textContent?.trim(),
+      { timeout: 15_000 }
+    ).catch(() => null)
 
     const name = await page.locator(SEL.productTitle).textContent().then(t => t?.trim() ?? '').catch(() => '')
 
