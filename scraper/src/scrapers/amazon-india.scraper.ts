@@ -65,11 +65,13 @@ export class AmazonIndiaScraper extends BaseScraper {
     await page.goto(url, { waitUntil: 'domcontentloaded' })
     // Wait until #productTitle has non-empty text — Amazon hydrates it after DOMContentLoaded
     await page.waitForFunction(
-      () => (document.querySelector('#productTitle') as HTMLElement)?.textContent?.trim(),
+      () => document.querySelector('#productTitle')?.textContent?.trim(),
       { timeout: 15_000 }
     ).catch(() => null)
 
-    const name = await page.locator(SEL.productTitle).textContent().then(t => t?.trim() ?? '').catch(() => '')
+    const name = await page.evaluate(
+      () => document.querySelector('#productTitle')?.textContent?.trim() ?? ''
+    )
 
     const imageUrls: string[] = await page.locator(SEL.imageCarousel)
       .evaluateAll((imgs) =>
