@@ -26,12 +26,15 @@ export class AmazonUsScraper extends BaseScraper {
       await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
       await page.waitForTimeout(1500)
 
-      const links: string[] = await page.locator(`${SEL.productCard} ${SEL.productLink}`)
-        .evaluateAll((els) => els.map((a) => (a as HTMLAnchorElement).href))
+      const asins: string[] = await page.evaluate(() =>
+        Array.from(document.querySelectorAll('[data-component-type="s-search-result"][data-asin]'))
+          .map((el) => el.getAttribute('data-asin') ?? '')
+          .filter(Boolean)
+      )
 
-      for (const link of links) {
+      for (const asin of asins) {
         if (count >= limit) return
-        yield link
+        yield `https://www.amazon.com/dp/${asin}`
         count++
       }
 

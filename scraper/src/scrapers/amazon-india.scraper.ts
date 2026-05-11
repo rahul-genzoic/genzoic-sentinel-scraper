@@ -39,20 +39,19 @@ export class AmazonIndiaScraper extends BaseScraper {
       await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
       await page.waitForTimeout(1500)
 
-      if (intercepted.length > 0) {
-        for (const u of intercepted.splice(0)) {
-          if (count >= limit) return
-          yield u
-          count++
-        }
-      } else {
-        const links: string[] = await page.locator(`${SEL.productCard} ${SEL.productLink}`)
-          .evaluateAll((els) => els.map((a) => (a as HTMLAnchorElement).href))
-        for (const link of links) {
-          if (count >= limit) return
-          yield link
-          count++
-        }
+      // Prefer XHR-intercepted ASINs; fall back to data-asin attributes on cards
+      const asins: string[] = intercepted.length > 0
+        ? intercepted.splice(0)
+        : await page.evaluate(() =>
+            Array.from(document.querySelectorAll('[data-component-type="s-search-result"][data-asin]'))
+              .map((el) => el.getAttribute('data-asin') ?? '')
+              .filter(Boolean)
+          )
+
+      for (const asin of asins) {
+        if (count >= limit) return
+        yield `https://www.amazon.in/dp/${asin}`
+        count++
       }
 
       const nextHref = await page.locator(SEL.nextPage)
