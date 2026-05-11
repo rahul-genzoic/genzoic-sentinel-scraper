@@ -2,6 +2,7 @@
 import 'dotenv/config'
 import { program } from 'commander'
 import { getScraper, getAllScrapers, listScraperNames } from './src/scrapers/registry.js'
+import { SCRAPER_CONFIGS } from './src/config/scrapers.config.js'
 import { runScraper } from './src/runner/orchestrator.js'
 import { startScheduler } from './src/runner/scheduler.js'
 import { importFromDisk } from './src/import/db-importer.js'
@@ -16,14 +17,18 @@ program
   .command('scrape')
   .description('Scrape products from a marketplace source')
   .requiredOption('--source <source>', `Scraper name or "all". Options: ${listScraperNames().join(', ')}`)
-  .requiredOption('--category <category>', 'Product category to search')
-  .option('--limit <number>', 'Max products to scrape', '50')
+  .option('--category <category>', 'Product category to search (omit to run all default categories for the source)')
+  .option('--limit <number>', 'Max products to scrape per category', '50')
   .action(async (opts) => {
     const limit = parseInt(opts.limit, 10)
     const scrapers = opts.source === 'all' ? getAllScrapers() : [getScraper(opts.source)]
     for (const scraper of scrapers) {
-      const summary = await runScraper({ scraper, category: opts.category, limit })
-      console.log(`\n✓ ${scraper.name}: ${summary.scraped} scraped, ${summary.failed} failed (${summary.durationMs}ms)\n`)
+      const config = SCRAPER_CONFIGS[scraper.name]
+      const categories: string[] = opts.category ? [opts.category] : (config?.categories ?? ['supplements'])
+      for (const category of categories) {
+        const summary = await runScraper({ scraper, category, limit })
+        console.log(`\n✓ ${scraper.name}/${category}: ${summary.scraped} scraped, ${summary.failed} failed (${summary.durationMs}ms)\n`)
+      }
     }
   })
 
