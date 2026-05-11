@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   Building2, Package, Image, ShieldCheck,
-  LayoutKanban, Mail
+  Kanban, Mail
 } from 'lucide-react'
 
 const NAV = [
@@ -25,7 +25,7 @@ const NAV = [
   {
     group: 'WORKFLOW',
     items: [
-      { href: '/workflow',  label: 'Kanban',   icon: LayoutKanban },
+      { href: '/workflow',  label: 'Kanban',   icon: Kanban },
       { href: '/outreach',  label: 'Outreach', icon: Mail },
     ],
   },
