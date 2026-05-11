@@ -39,6 +39,23 @@ export async function runScraper(options: OrchestratorOptions): Promise<RunSumma
     startedAt: new Date().toISOString(),
   }
 
+  // Build set of already-scraped URLs from existing metadata.json files
+  const scrapedUrls = new Set<string>()
+  try {
+    const walk = async (dir: string): Promise<void> => {
+      const entries = await fs.readdir(dir, { withFileTypes: true }).catch(() => [])
+      await Promise.all(entries.map(async (e) => {
+        if (e.isDirectory()) return walk(path.join(dir, e.name))
+        if (e.name === 'metadata.json') {
+          const raw = await fs.readFile(path.join(dir, e.name), 'utf-8').catch(() => '{}')
+          const meta = JSON.parse(raw)
+          if (meta.productUrl) scrapedUrls.add(meta.productUrl)
+        }
+      }))
+    }
+    await walk(PATHS.dataRoot)
+  } catch { /* dataRoot may not exist yet */ }
+
   const startTime = Date.now()
   const browser = await launchBrowser(headed)
   const ctx = await createContext(browser, proxy)
@@ -58,6 +75,13 @@ export async function runScraper(options: OrchestratorOptions): Promise<RunSumma
     for await (const productUrl of scraper.discoverListings(listPage, category, { limit })) {
       if (shutdownRequested) break
       summary.total++
+
+      if (scrapedUrls.has(productUrl)) {
+        summary.skipped++
+        logger.info('skipped (already scraped)', { url: productUrl })
+        continue
+      }
+
       const productPage = await newPage(ctx).catch(() => null)
       if (!productPage) break
 
