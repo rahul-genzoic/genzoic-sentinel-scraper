@@ -42,12 +42,23 @@ export async function runScraper(options: OrchestratorOptions): Promise<RunSumma
   const browser = await launchBrowser()
   const ctx = await createContext(browser, proxy)
 
+  let shutdownRequested = false
+  const shutdown = async () => {
+    shutdownRequested = true
+    await ctx.close().catch(() => null)
+    await browser.close().catch(() => null)
+  }
+  process.once('SIGINT', shutdown)
+  process.once('SIGTERM', shutdown)
+
   try {
     const listPage = await newPage(ctx)
 
     for await (const productUrl of scraper.discoverListings(listPage, category, { limit })) {
+      if (shutdownRequested) break
       summary.total++
-      const productPage = await newPage(ctx)
+      const productPage = await newPage(ctx).catch(() => null)
+      if (!productPage) break
 
       try {
         const domainMatch = productUrl.match(/^https?:\/\/([^/]+)/)
@@ -99,8 +110,10 @@ export async function runScraper(options: OrchestratorOptions): Promise<RunSumma
       }
     }
   } finally {
-    await ctx.close()
-    await browser.close()
+    process.off('SIGINT', shutdown)
+    process.off('SIGTERM', shutdown)
+    await ctx.close().catch(() => null)
+    await browser.close().catch(() => null)
   }
 
   summary.durationMs = Date.now() - startTime

@@ -45,18 +45,23 @@ export class IHerbScraper extends BaseScraper {
 
   async scrapeProduct(page: Page, url: string): Promise<RawProduct> {
     await page.goto(url, { waitUntil: 'domcontentloaded' })
-    await page.waitForSelector(SEL.productTitle, { timeout: 15_000 }).catch(() => null)
+    // Wait for any h1 — iHerb renders title client-side
+    await page.waitForSelector('h1', { timeout: 20_000 }).catch(() => null)
 
-    const name = await page.locator(SEL.productTitle).textContent().then(t => t?.trim() ?? '').catch(() => '')
+    // Multiple selector fallbacks: iHerb's class names vary by region/version
+    const name = await page.locator('h1.product-title, h1[itemprop="name"], h1').first()
+      .textContent().then(t => t?.trim() ?? '').catch(() => '')
 
-    const imageUrls: string[] = await page.locator(SEL.imageCarousel)
-      .evaluateAll((imgs) =>
-        [...new Set(
-          (imgs as HTMLImageElement[])
-            .map((img) => img.getAttribute('data-src') || img.src)
-            .filter((src): src is string => typeof src === 'string' && src.startsWith('http'))
-        )]
-      )
+    const imageUrls: string[] = await page.evaluate(() => {
+      const imgs = Array.from(document.querySelectorAll(
+        '.slick-slide img, #productImage img, .product-image-container img, img[src*="cloudfront"], img[data-src*="cloudfront"]'
+      )) as HTMLImageElement[]
+      return [...new Set(
+        imgs
+          .map((img) => img.getAttribute('data-src') || img.src)
+          .filter((src): src is string => typeof src === 'string' && src.startsWith('http') && !src.includes('placeholder'))
+      )]
+    })
 
     return {
       name,
@@ -70,8 +75,10 @@ export class IHerbScraper extends BaseScraper {
   }
 
   async extractCompany(page: Page, product: RawProduct): Promise<RawCompany> {
-    const brand = await page.locator(SEL.brandLink).textContent().then(t => t?.trim() ?? '').catch(() => '')
-    const brandHref = await page.locator(SEL.brandLink).getAttribute('href').catch(() => null)
+    const brand = await page.locator('a.brand-name, .brand-name a, [itemprop="brand"] a, .brand a').first()
+      .textContent().then(t => t?.trim() ?? '').catch(() => '')
+    const brandHref = await page.locator('a.brand-name, .brand-name a, [itemprop="brand"] a').first()
+      .getAttribute('href').catch(() => null)
 
     let emails = filterBusinessEmails(extractEmailsFromHtml(product.rawHtml ?? ''))
 
