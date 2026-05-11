@@ -2,6 +2,7 @@ import type { Page } from 'playwright'
 import { BaseScraper, type RawProduct, type RawCompany } from './base.scraper.js'
 import { SCRAPER_CONFIGS } from '../config/scrapers.config.js'
 import { filterBusinessEmails, extractEmailsFromHtml } from '../lib/email-extractor.js'
+import { findCompanyEmails } from '../lib/website-finder.js'
 
 const SEL = SCRAPER_CONFIGS['amazon-india'].selectors
 
@@ -97,8 +98,16 @@ export class AmazonIndiaScraper extends BaseScraper {
   async extractCompany(page: Page, product: RawProduct): Promise<RawCompany> {
     const brandText = await page.locator(SEL.brandLink).textContent().catch(() => '')
     const brand = (brandText ?? '').replace(/^(Visit the|Brand:|by)\s+/i, '').trim()
-    const emails = filterBusinessEmails(extractEmailsFromHtml(product.rawHtml ?? ''))
 
-    return { name: brand || 'Unknown', brand: brand || 'Unknown', emails, country: this.country }
+    // Try Amazon page HTML first, then fall back to DuckDuckGo → company website
+    let emails = filterBusinessEmails(extractEmailsFromHtml(product.rawHtml ?? ''))
+    let website = ''
+    if (emails.length === 0 && brand) {
+      const result = await findCompanyEmails(page, brand)
+      emails = result.emails
+      website = result.website
+    }
+
+    return { name: brand || 'Unknown', brand: brand || 'Unknown', emails, website: website || undefined, country: this.country }
   }
 }
