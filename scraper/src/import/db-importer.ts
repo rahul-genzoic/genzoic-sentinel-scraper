@@ -63,6 +63,15 @@ export async function importFromDisk(
         },
       })
 
+      for (const c of meta.contacts ?? []) {
+        if (!c.linkedinUrl) continue
+        await prisma.contact.upsert({
+          where:  { linkedinUrl: c.linkedinUrl },
+          create: { companyId: company.id, name: c.name, title: c.title ?? '', linkedinUrl: c.linkedinUrl },
+          update: { name: c.name, title: c.title ?? '' },
+        })
+      }
+
       const product = await prisma.product.upsert({
         where:  { sourceUrl: meta.productUrl },
         create: {
