@@ -3,6 +3,7 @@ import { BaseScraper, type RawProduct, type RawCompany } from './base.scraper.js
 import { SCRAPER_CONFIGS } from '../config/scrapers.config.js'
 import { filterBusinessEmails, extractEmailsFromHtml } from '../lib/email-extractor.js'
 import { findCompanyEmails } from '../lib/website-finder.js'
+import { findLinkedInProfiles } from '../lib/linkedin-finder.js'
 
 const SEL = SCRAPER_CONFIGS['amazon-us'].selectors
 
@@ -14,14 +15,12 @@ export class AmazonUsScraper extends BaseScraper {
   async *discoverListings(
     page: Page,
     category: string,
-    options: { limit?: number }
+    _options: { limit?: number }
   ): AsyncGenerator<string> {
     const query = encodeURIComponent(category)
     let url = SEL.searchUrl.replace('{query}', query)
-    let count = 0
-    const limit = options.limit ?? 50
 
-    while (url && count < limit) {
+    while (url) {
       await page.goto(url, { waitUntil: 'domcontentloaded' })
       await page.waitForSelector(SEL.productCard, { timeout: 10_000 }).catch(() => null)
       await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
@@ -34,9 +33,7 @@ export class AmazonUsScraper extends BaseScraper {
       )
 
       for (const asin of asins) {
-        if (count >= limit) return
         yield `https://www.amazon.com/dp/${asin}`
-        count++
       }
 
       const nextHref = await page.locator(SEL.nextPage).getAttribute('href').catch(() => null)
@@ -88,6 +85,8 @@ export class AmazonUsScraper extends BaseScraper {
       website = result.website
     }
 
-    return { name: brand || 'Unknown', brand: brand || 'Unknown', emails, website: website || undefined, country: this.country }
+    const contacts = brand ? await findLinkedInProfiles(page, brand) : []
+
+    return { name: brand || 'Unknown', brand: brand || 'Unknown', emails, website: website || undefined, contacts, country: this.country }
   }
 }
