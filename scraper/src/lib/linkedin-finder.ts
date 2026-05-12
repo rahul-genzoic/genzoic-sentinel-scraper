@@ -28,7 +28,7 @@ function extractLinkedInUrls(hrefs: string[]): string[] {
 }
 
 async function searchDDG(page: Page, query: string): Promise<string[]> {
-  await page.goto(`${DDG}${encodeURIComponent(query)}`, { waitUntil: 'domcontentloaded' })
+  await page.goto(`${DDG}${encodeURIComponent(query)}`, { waitUntil: 'domcontentloaded', timeout: 10_000 })
   return page.evaluate(() =>
     Array.from(document.querySelectorAll('a.result__a'))
       .map((a) => (a as HTMLAnchorElement).href)
@@ -48,7 +48,7 @@ export async function findLinkedInProfiles(
     { q: `"${brand}" (CMO OR "marketing director" OR "sales director") site:linkedin.com/in`,  title: 'Marketing Lead' },
   ]
 
-  for (const { q, title } of queries) {
+  for (const [i, { q, title }] of queries.entries()) {
     try {
       const hrefs = await searchDDG(page, q)
       const urls  = extractLinkedInUrls(hrefs)
@@ -68,7 +68,7 @@ export async function findLinkedInProfiles(
       logger.debug('linkedin search failed', { brand, title, error: String(err) })
     }
 
-    await page.waitForTimeout(1500)
+    if (i < queries.length - 1) await page.waitForTimeout(1500)
   }
 
   return results
