@@ -12,7 +12,7 @@ import type { BaseScraper } from '../scrapers/base.scraper.js'
 import type { MetadataJson, RunSummary } from '../types.js'
 
 function toSlug(name: string): string {
-  return slugify(name, { lower: true, strict: true })
+  return slugify(name, { lower: true, strict: true }).slice(0, 80)
 }
 
 export interface OrchestratorOptions {
@@ -72,15 +72,17 @@ export async function runScraper(options: OrchestratorOptions): Promise<RunSumma
   try {
     const listPage = await newPage(ctx)
 
-    for await (const productUrl of scraper.discoverListings(listPage, category, { limit })) {
+    for await (const productUrl of scraper.discoverListings(listPage, category, {})) {
       if (shutdownRequested) break
-      summary.total++
+      if (limit !== undefined && summary.scraped >= limit) break
 
       if (scrapedUrls.has(productUrl)) {
         summary.skipped++
         logger.info('skipped (already scraped)', { url: productUrl })
         continue
       }
+
+      summary.total++
 
       const productPage = await newPage(ctx).catch(() => null)
       if (!productPage) break
@@ -117,6 +119,7 @@ export async function runScraper(options: OrchestratorOptions): Promise<RunSumma
           category:    rawProduct.category,
           scrapedAt:   new Date().toISOString(),
           images,
+          contacts:    rawCompany.contacts ?? [],
         }
 
         await fs.writeFile(

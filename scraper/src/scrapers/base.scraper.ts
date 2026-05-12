@@ -1,4 +1,5 @@
 import type { Page } from 'playwright'
+import type { ContactMeta } from '../types.js'
 
 export interface RawProduct {
   name: string
@@ -19,6 +20,7 @@ export interface RawCompany {
   linkedin?: string
   social?: Record<string, string>
   country: 'IN' | 'US'
+  contacts?: ContactMeta[]
 }
 
 export abstract class BaseScraper {

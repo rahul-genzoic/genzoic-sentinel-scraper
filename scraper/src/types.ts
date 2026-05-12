@@ -12,6 +12,12 @@ export interface ImageMeta {
   sha256: string
 }
 
+export interface ContactMeta {
+  name: string
+  title: string
+  linkedinUrl: string
+}
+
 export interface MetadataJson {
   company: string
   brand: string
@@ -27,6 +33,7 @@ export interface MetadataJson {
   category: string
   scrapedAt: string
   images: ImageMeta[]
+  contacts: ContactMeta[]
 }
 
 export interface RunSummary {
