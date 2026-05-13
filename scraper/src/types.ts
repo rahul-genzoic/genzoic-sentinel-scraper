@@ -16,6 +16,7 @@ export interface ContactMeta {
   name: string
   title: string
   linkedinUrl: string
+  email?: string
 }
 
 export interface MetadataJson {

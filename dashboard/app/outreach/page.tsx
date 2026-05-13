@@ -18,40 +18,44 @@ export default async function OutreachPage() {
         {outreach.length} outreach records
       </div>
 
-      <table className="sentinel-table">
-        <thead>
-          <tr>
-            <th>Company</th>
-            <th>Channel</th>
-            <th>Recipient</th>
-            <th>Subject</th>
-            <th>Status</th>
-            <th>Sent</th>
-            <th>Replied</th>
-          </tr>
-        </thead>
-        <tbody>
-          {outreach.map((o) => (
-            <tr key={o.id}>
-              <td>
-                <Link href={`/companies/${o.company.id}`} className="text-accent-purple hover:underline">
-                  {o.company.name}
-                </Link>
-              </td>
-              <td className="text-text-secondary capitalize">{o.channel ?? '—'}</td>
-              <td className="text-text-secondary text-xs">{o.recipient ?? '—'}</td>
-              <td className="text-text-secondary">{o.subject ?? '—'}</td>
-              <td><StatusBadge status={o.status} /></td>
-              <td className="text-text-muted text-xs">
-                {o.sentAt ? new Date(o.sentAt).toLocaleDateString() : '—'}
-              </td>
-              <td className="text-text-muted text-xs">
-                {o.repliedAt ? new Date(o.repliedAt).toLocaleDateString() : '—'}
-              </td>
+      <div className="sentinel-table-scroll">
+        <table className="sentinel-table">
+          <thead>
+            <tr>
+              <th className="w-10 text-center">#</th>
+              <th>Company</th>
+              <th>Channel</th>
+              <th>Recipient</th>
+              <th>Subject</th>
+              <th>Status</th>
+              <th>Sent</th>
+              <th>Replied</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {outreach.map((o, i) => (
+              <tr key={o.id}>
+                <td className="text-center text-text-muted text-xs">{i + 1}</td>
+                <td>
+                  <Link href={`/companies/${o.company.id}`} className="text-accent-purple hover:underline">
+                    {o.company.name}
+                  </Link>
+                </td>
+                <td className="text-text-secondary capitalize">{o.channel ?? '—'}</td>
+                <td className="text-text-secondary text-xs">{o.recipient ?? '—'}</td>
+                <td className="text-text-secondary">{o.subject ?? '—'}</td>
+                <td><StatusBadge status={o.status} /></td>
+                <td className="text-text-muted text-xs">
+                  {o.sentAt ? new Date(o.sentAt).toLocaleDateString() : '—'}
+                </td>
+                <td className="text-text-muted text-xs">
+                  {o.repliedAt ? new Date(o.repliedAt).toLocaleDateString() : '—'}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       {outreach.length === 0 && (
         <p className="text-center text-text-muted text-sm py-12">

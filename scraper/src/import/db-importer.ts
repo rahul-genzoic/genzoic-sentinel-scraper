@@ -67,8 +67,8 @@ export async function importFromDisk(
         if (!c.linkedinUrl) continue
         await prisma.contact.upsert({
           where:  { linkedinUrl: c.linkedinUrl },
-          create: { companyId: company.id, name: c.name, title: c.title ?? '', linkedinUrl: c.linkedinUrl },
-          update: { name: c.name, title: c.title ?? '' },
+          create: { companyId: company.id, name: c.name, title: c.title ?? '', linkedinUrl: c.linkedinUrl, email: c.email ?? null },
+          update: { name: c.name, title: c.title ?? '', email: c.email ?? null },
         })
       }
 

@@ -110,6 +110,7 @@ model Contact {
   companyId   String   @map("company_id") @db.Uuid
   name        String
   title       String?
+  email       String?
   linkedinUrl String   @unique @map("linkedin_url")
   createdAt   DateTime @default(now()) @map("created_at")
   company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)

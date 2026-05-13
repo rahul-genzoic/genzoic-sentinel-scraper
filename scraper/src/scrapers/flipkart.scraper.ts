@@ -66,7 +66,7 @@ export class FlipkartScraper extends BaseScraper {
     }
   }
 
-  async scrapeProduct(page: Page, url: string): Promise<RawProduct> {
+  async scrapeProduct(page: Page, url: string, category: string): Promise<RawProduct> {
     await page.goto(url, { waitUntil: 'domcontentloaded' })
     await page.waitForSelector(SEL.productTitle, { timeout: 15_000 }).catch(() => null)
 
@@ -87,7 +87,7 @@ export class FlipkartScraper extends BaseScraper {
       sourceUrl:   url,
       marketplace: this.marketplace,
       country:     this.country,
-      category:    '',
+      category,
       imageUrls:   imageUrls.slice(0, 8),
       rawHtml:     await page.content(),
     }

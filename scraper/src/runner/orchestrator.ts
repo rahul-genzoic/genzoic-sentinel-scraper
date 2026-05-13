@@ -92,7 +92,7 @@ export async function runScraper(options: OrchestratorOptions): Promise<RunSumma
         const domain = domainMatch?.[1] ?? 'unknown'
         await rateLimiter.wait(domain)
 
-        const rawProduct = await withRetry(() => scraper.scrapeProduct(productPage, productUrl))
+        const rawProduct = await withRetry(() => scraper.scrapeProduct(productPage, productUrl, category))
         const rawCompany = await withRetry(() => scraper.extractCompany(productPage, rawProduct))
 
         const extraEmails = filterBusinessEmails(extractEmailsFromHtml(rawProduct.rawHtml ?? ''))

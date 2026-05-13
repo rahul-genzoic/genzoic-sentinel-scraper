@@ -26,6 +26,7 @@ model Company {
   products    Product[]
   activityLog ActivityLog[]
   outreach    Outreach[]
+  contacts    Contact[]
 
   @@unique([name, country])
   @@map("companies")
@@ -102,4 +103,17 @@ model Outreach {
   company   Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   @@map("outreach")
+}
+
+model Contact {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId   String   @map("company_id") @db.Uuid
+  name        String
+  title       String?
+  email       String?
+  linkedinUrl String   @unique @map("linkedin_url")
+  createdAt   DateTime @default(now()) @map("created_at")
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@map("contacts")
 }

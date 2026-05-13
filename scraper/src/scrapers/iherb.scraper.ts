@@ -43,7 +43,7 @@ export class IHerbScraper extends BaseScraper {
     }
   }
 
-  async scrapeProduct(page: Page, url: string): Promise<RawProduct> {
+  async scrapeProduct(page: Page, url: string, category: string): Promise<RawProduct> {
     await page.goto(url, { waitUntil: 'domcontentloaded' })
     // Wait for any h1 — iHerb renders title client-side
     await page.waitForSelector('h1', { timeout: 20_000 }).catch(() => null)
@@ -68,7 +68,7 @@ export class IHerbScraper extends BaseScraper {
       sourceUrl:   url,
       marketplace: this.marketplace,
       country:     this.country,
-      category:    '',
+      category,
       imageUrls:   imageUrls.slice(0, 8),
       rawHtml:     await page.content(),
     }

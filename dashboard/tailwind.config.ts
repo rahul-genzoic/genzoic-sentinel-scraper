@@ -10,6 +10,18 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        // shadcn/ui CSS variable tokens
+        background:  'var(--background)',
+        foreground:  'var(--foreground)',
+        card:        { DEFAULT: 'var(--card)', foreground: 'var(--card-foreground)' },
+        popover:     { DEFAULT: 'var(--popover)', foreground: 'var(--popover-foreground)' },
+        primary:     { DEFAULT: 'var(--primary)', foreground: 'var(--primary-foreground)' },
+        secondary:   { DEFAULT: 'var(--secondary)', foreground: 'var(--secondary-foreground)' },
+        muted:       { DEFAULT: 'var(--muted)', foreground: 'var(--muted-foreground)' },
+        destructive: 'var(--destructive)',
+        ring:        'var(--ring)',
+        input:       'var(--input)',
+        // Sentinel design tokens
         bg: {
           app:     '#0a0a0a',
           sidebar: '#141414',

@@ -90,8 +90,31 @@ export default async function CompanyDetailPage({ params, searchParams }: PagePr
                 </dl>
               </div>
             </div>
-            <div>
+            <div className="space-y-6">
               <NotesPanel companyId={company.id} initialNotes={company.notes} />
+              {company.contacts.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-3">Contacts</h3>
+                  <ul className="space-y-3">
+                    {company.contacts.map((c) => (
+                      <li key={c.id} className="text-sm">
+                        <div className="font-medium text-text-primary">{c.name}</div>
+                        {c.title && <div className="text-text-muted text-xs">{c.title}</div>}
+                        {c.email && (
+                          <a href={`mailto:${c.email}`} className="text-xs text-accent-purple hover:underline">
+                            {c.email}
+                          </a>
+                        )}
+                        {c.linkedinUrl && (
+                          <a href={c.linkedinUrl} target="_blank" rel="noopener noreferrer" className="block text-xs text-accent-blue hover:underline">
+                            LinkedIn
+                          </a>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -154,11 +177,46 @@ export default async function CompanyDetailPage({ params, searchParams }: PagePr
           </div>
         )}
 
-        {tab === 'compliance' && (
-          <p className="text-text-muted text-sm">
-            Compliance findings for this company will appear here once the analysis engine has run.
-          </p>
-        )}
+        {tab === 'compliance' && (() => {
+          const findings = company.products.flatMap((p) =>
+            p.findings.map((f) => ({ ...f, product: { id: p.id, name: p.name } }))
+          ).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+
+          if (findings.length === 0) {
+            return <p className="text-text-muted text-sm">No compliance findings yet.</p>
+          }
+
+          return (
+            <table className="sentinel-table">
+              <thead>
+                <tr><th>Product</th><th>Severity</th><th>Finding</th><th>Engine</th><th>Date</th></tr>
+              </thead>
+              <tbody>
+                {findings.map((f) => (
+                  <tr key={f.id}>
+                    <td>
+                      <Link href={`/products/${f.product.id}`} className="text-accent-purple hover:underline">
+                        {f.product.name}
+                      </Link>
+                    </td>
+                    <td>
+                      <span className={`text-xs font-medium ${
+                        f.severity === 'critical' ? 'text-accent-red'
+                        : f.severity === 'warning' ? 'text-accent-amber'
+                        : 'text-accent-blue'
+                      }`}>
+                        {f.severity ?? '—'}
+                      </span>
+                    </td>
+                    <td className="text-text-secondary max-w-md truncate">{f.finding}</td>
+                    <td className="text-text-muted text-xs uppercase">{f.engine ?? '—'}</td>
+                    <td className="text-text-muted text-xs">{new Date(f.createdAt).toLocaleDateString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )
+        })()}
       </div>
     </div>
   )

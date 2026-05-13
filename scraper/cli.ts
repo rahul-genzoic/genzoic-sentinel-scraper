@@ -6,6 +6,7 @@ import { SCRAPER_CONFIGS } from './src/config/scrapers.config.js'
 import { runScraper } from './src/runner/orchestrator.js'
 import { startScheduler } from './src/runner/scheduler.js'
 import { importFromDisk } from './src/import/db-importer.js'
+import { checkData, printReport, fixProducts } from './src/check/data-checker.js'
 import { logger } from './src/lib/logger.js'
 
 program
@@ -41,6 +42,39 @@ program
   .action(async (opts) => {
     const { imported, failed } = await importFromDisk(opts.dir)
     console.log(`\n✓ Import complete: ${imported} imported, ${failed} failed\n`)
+  })
+
+program
+  .command('check')
+  .description('Check metadata.json files for missing or incomplete data')
+  .option('--dir <dir>', 'Data root directory', '../data')
+  .option('--fix', 'Re-scrape Unknown company entries to recover missing brand names')
+  .option('--headed', 'Run browser in headed mode when fixing')
+  .action(async (opts) => {
+    const results = await checkData(opts.dir)
+    const files = await import('fs/promises').then((fs) =>
+      fs.readdir(opts.dir).then(() => true).catch(() => false)
+    )
+    if (!files) {
+      console.error(`\n  ✗ Directory not found: ${opts.dir}\n`)
+      process.exit(1)
+    }
+    // Count total metadata files for the report
+    const { readdir } = await import('fs/promises')
+    const walk = async (dir: string): Promise<number> => {
+      let count = 0
+      const entries = await readdir(dir, { withFileTypes: true }).catch(() => [])
+      for (const e of entries) {
+        if (e.isDirectory()) count += await walk(`${dir}/${e.name}`)
+        else if (e.name === 'metadata.json') count++
+      }
+      return count
+    }
+    const total = await walk(opts.dir)
+    printReport(results, total)
+    if (opts.fix) {
+      await fixProducts(results, !!opts.headed)
+    }
   })
 
 program

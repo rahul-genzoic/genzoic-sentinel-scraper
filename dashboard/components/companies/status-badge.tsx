@@ -1,21 +1,23 @@
-const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
-  new:               { label: 'New',               color: 'bg-text-muted/20 text-text-secondary' },
-  analyzed:          { label: 'Analyzed',           color: 'bg-accent-blue/10 text-accent-blue' },
-  outreach_sent:     { label: 'Outreach Sent',      color: 'bg-accent-amber/10 text-accent-amber' },
-  in_discussion:     { label: 'In Discussion',      color: 'bg-accent-amber/20 text-accent-amber' },
-  working_with_them: { label: 'Working With Them',  color: 'bg-accent-green/10 text-accent-green' },
-  report_shared:     { label: 'Report Shared',      color: 'bg-accent-green/20 text-accent-green' },
-  completed:         { label: 'Completed',          color: 'bg-accent-green/30 text-accent-green' },
-  ignored:           { label: 'Ignored',            color: 'bg-border text-text-muted' },
-  high_priority:     { label: 'High Priority',      color: 'bg-accent-purple/20 text-accent-purple' },
+import { Badge } from '@/components/ui/badge'
+
+const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
+  new:               { label: 'New',               className: 'bg-text-muted/20 text-text-secondary border-transparent' },
+  analyzed:          { label: 'Analyzed',           className: 'bg-accent-blue/10 text-accent-blue border-accent-blue/30' },
+  outreach_sent:     { label: 'Outreach Sent',      className: 'bg-accent-amber/10 text-accent-amber border-accent-amber/30' },
+  in_discussion:     { label: 'In Discussion',      className: 'bg-accent-amber/20 text-accent-amber border-accent-amber/40' },
+  working_with_them: { label: 'Working With Them',  className: 'bg-accent-green/10 text-accent-green border-accent-green/30' },
+  report_shared:     { label: 'Report Shared',      className: 'bg-accent-green/20 text-accent-green border-accent-green/40' },
+  completed:         { label: 'Completed',          className: 'bg-accent-green/30 text-accent-green border-accent-green/50' },
+  ignored:           { label: 'Ignored',            className: 'bg-border text-text-muted border-transparent' },
+  high_priority:     { label: 'High Priority',      className: 'bg-accent-purple/20 text-accent-purple border-accent-purple/40' },
 }
 
 export function StatusBadge({ status }: { status: string }) {
-  const cfg = STATUS_CONFIG[status] ?? { label: status, color: 'bg-border text-text-muted' }
+  const cfg = STATUS_CONFIG[status] ?? { label: status, className: 'bg-border text-text-muted border-transparent' }
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${cfg.color}`}>
+    <Badge variant="outline" className={cfg.className}>
       {cfg.label}
-    </span>
+    </Badge>
   )
 }
 

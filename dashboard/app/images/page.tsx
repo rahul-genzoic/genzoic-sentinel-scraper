@@ -31,9 +31,10 @@ export default async function ImagesPage({ searchParams }: PageProps) {
   })
 
   function imageUrl(diskPath: string): string {
-    const normalised = diskPath.replace(/\\/g, '/')
-    const parts = normalised.split('/data/')
-    return `/api/images/${parts[1] ?? diskPath}`
+    const n = diskPath.replace(/\\/g, '/')
+    const idx = n.lastIndexOf('/data/')
+    const rel = idx >= 0 ? n.slice(idx + 6) : n.replace(/^data\//, '')
+    return `/data/${rel}`
   }
 
   return (

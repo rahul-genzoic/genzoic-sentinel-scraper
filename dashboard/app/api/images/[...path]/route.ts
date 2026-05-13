@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { promises as fs } from 'fs'
 import path from 'path'
 
-const DATA_ROOT = path.resolve(process.env.DATA_ROOT ?? path.join(process.cwd(), '../scraper/data'))
+const DATA_ROOT = path.resolve(
+  process.env.DATA_ROOT ?? path.join(process.cwd(), '../data')
+)
 
 export async function GET(
   _req: NextRequest,
@@ -18,7 +20,9 @@ export async function GET(
   try {
     const file = await fs.readFile(filePath)
     const ext = path.extname(filePath).slice(1).toLowerCase()
-    const mime = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg'
+    const mime =
+      ext === 'png'  ? 'image/png'  :
+      ext === 'webp' ? 'image/webp' : 'image/jpeg'
 
     return new NextResponse(file, {
       headers: {

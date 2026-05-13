@@ -12,7 +12,7 @@ export interface CompanyFilters {
 const PAGE_SIZE = 50
 
 export async function getCompanies(filters: CompanyFilters = {}) {
-  const { status, country, q, sort = 'scraped_at', dir = 'desc', page = 1 } = filters
+  const { status, country, q, sort = 'scrapedAt', dir = 'desc', page = 1 } = filters
 
   const where = {
     ...(status  ? { status }  : {}),
@@ -43,9 +43,14 @@ export async function getCompany(id: string) {
   return prisma.company.findUniqueOrThrow({
     where: { id },
     include: {
-      products:    { orderBy: { createdAt: 'desc' }, take: 20 },
+      products:    {
+        orderBy:  { createdAt: 'desc' },
+        take:     20,
+        include:  { findings: { orderBy: { createdAt: 'desc' } } },
+      },
       activityLog: { orderBy: { createdAt: 'desc' }, take: 50 },
       outreach:    { orderBy: { createdAt: 'desc' } },
+      contacts:    { orderBy: { createdAt: 'desc' } },
       _count:      { select: { products: true } },
     },
   })

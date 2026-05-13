@@ -41,7 +41,7 @@ export class AmazonUsScraper extends BaseScraper {
     }
   }
 
-  async scrapeProduct(page: Page, url: string): Promise<RawProduct> {
+  async scrapeProduct(page: Page, url: string, category: string): Promise<RawProduct> {
     await page.goto(url, { waitUntil: 'domcontentloaded' })
     await page.waitForFunction(
       () => document.querySelector('#productTitle')?.textContent?.trim(),
@@ -67,7 +67,7 @@ export class AmazonUsScraper extends BaseScraper {
       sourceUrl:   url,
       marketplace: this.marketplace,
       country:     this.country,
-      category:    '',
+      category,
       imageUrls:   imageUrls.slice(0, 8),
       rawHtml:     await page.content(),
     }
@@ -75,7 +75,32 @@ export class AmazonUsScraper extends BaseScraper {
 
   async extractCompany(page: Page, product: RawProduct): Promise<RawCompany> {
     const brandText = await page.locator(SEL.brandLink).textContent().catch(() => '')
-    const brand = (brandText ?? '').replace(/^(Visit the|Brand:|by)\s+/i, '').trim()
+    let brand = (brandText ?? '').replace(/^(Visit the|Brand:|by)\s+/i, '').trim()
+
+    // Fallback: parse Item Details table for Brand Name / Manufacturer
+    if (!brand) {
+      brand = await page.evaluate(() => {
+        const rows = Array.from(document.querySelectorAll(
+          '#productDetails_techSpec_section_1 tr, #productDetails_detailBullets_sections1 tr, #prodDetails table tr'
+        ))
+        for (const row of rows) {
+          const header = row.querySelector('th, td:first-child')?.textContent?.trim().toLowerCase() ?? ''
+          if (header.includes('brand') || header.includes('manufacturer')) {
+            return row.querySelector('td:last-child')?.textContent?.trim() ?? ''
+          }
+        }
+        // Also check bullet-list format
+        const bullets = Array.from(document.querySelectorAll('#detailBullets_feature_div li'))
+        for (const li of bullets) {
+          const text = li.textContent ?? ''
+          if (/brand|manufacturer/i.test(text)) {
+            const parts = text.split(':')
+            if (parts[1]) return parts[1].trim().replace(/\u200E/g, '')
+          }
+        }
+        return ''
+      }).catch(() => '')
+    }
 
     let emails = filterBusinessEmails(extractEmailsFromHtml(product.rawHtml ?? ''))
     let website = ''

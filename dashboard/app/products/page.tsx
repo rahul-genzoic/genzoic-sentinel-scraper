@@ -1,5 +1,6 @@
 import { Topbar } from '@/components/layout/topbar'
 import { ProductsTable } from '@/components/products/products-table'
+import { ProductsFilters } from '@/components/products/products-filters'
 import { getProducts } from '@/lib/queries/products'
 
 interface PageProps {
@@ -17,7 +18,13 @@ export default async function ProductsPage({ searchParams }: PageProps) {
   return (
     <div>
       <Topbar crumbs={[{ label: 'Products' }]} />
-      <ProductsTable products={products} total={total} />
+      <ProductsFilters />
+      <ProductsTable
+        products={products}
+        total={total}
+        currentPage={params.page ? parseInt(params.page) : 1}
+        currentFilters={{ marketplace: params.marketplace, category: params.category }}
+      />
     </div>
   )
 }

@@ -34,7 +34,7 @@ export abstract class BaseScraper {
     options: { limit?: number }
   ): AsyncGenerator<string>
 
-  abstract scrapeProduct(page: Page, url: string): Promise<RawProduct>
+  abstract scrapeProduct(page: Page, url: string, category: string): Promise<RawProduct>
 
   abstract extractCompany(page: Page, product: RawProduct): Promise<RawCompany>
 }

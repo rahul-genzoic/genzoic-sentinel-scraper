@@ -6,7 +6,15 @@
     "dev": "tsx cli.ts",
     "build": "tsc",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "import": "tsx cli.ts import --dir ../data",
+    "migrate": "prisma migrate dev",
+    "scrape:amazon-india": "tsx cli.ts scrape --source amazon-india",
+    "scrape:amazon-us": "tsx cli.ts scrape --source amazon-us",
+    "scrape:all": "tsx cli.ts scrape --source all",
+    "scrape:amazon": "tsx cli.ts scrape --source amazon-india && tsx cli.ts scrape --source amazon-us",
+    "check": "tsx cli.ts check --dir ../data",
+    "check:fix": "tsx cli.ts check --dir ../data --fix"
   },
   "bin": {
     "sentinel": "./cli.ts"
